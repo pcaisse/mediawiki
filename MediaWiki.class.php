@@ -20,7 +20,7 @@ class MediaWiki {
 		* Edit a page
 		*/
 		
-		$token = static::_getEditToken($pageId, $text);
+		$token = static::_getEditToken($pageId);
 		
 		// build URL
 		$getParams = array(
@@ -37,6 +37,7 @@ class MediaWiki {
 	              			'pageid'  => $pageId,
 	              			'token'   => $token
               			);
+
         if (!empty($captchaId)) {
         	// add captcha id to params
         	array_merge($params, array('captchaid'=>$captchaId));
@@ -50,8 +51,8 @@ class MediaWiki {
 		
         $result = $xml->xpath("/api/edit");
         
-        if (empty($result)) {
-        	throw new Exception("Error retrieving Wiki response data.");
+        if (!is_array($result) || count($result) === 0) {
+        	throw new Exception("Error retrieving Wiki response data after edit.");
         }
         
         $resultVal = (string)$result[0]->attributes()->result; 
@@ -192,6 +193,7 @@ class MediaWiki {
 		
 		// get edit token id from XML
 	    $result = $xml->xpath("/api/query/pages/page");	
+
 	    $token = (string)$result[0]->attributes()->edittoken;
 	    
 	    if(!isset($token)) {
