@@ -48,25 +48,19 @@ class MediaWiki {
 		}
 		
 		$xml = static::_httpRequest($url, http_build_query($postParams));
-		
+
         $result = $xml->xpath("/api/edit");
-        
-        if (!is_array($result) || count($result) === 0) {
-        	throw new Exception("Error retrieving Wiki response data after edit.");
-        }
         
         $resultVal = (string)$result[0]->attributes()->result; 
 	
         if (isset($resultVal) && $resultVal === "Success") {
         	// edit was successful!
         	$newRevisionId = (string)$result[0]->attributes()->newrevid;
-            if (isset($newRevisionId)) {
-            	return array(
-            					'result'=>'success',
-            					'newrevid'=>$newRevisionId,
-            					'pageid'=>$pageId
-            				);
-            }
+        	return array(
+        					'result'=>'success',
+        					'newrevid'=>$newRevisionId,
+        					'pageid'=>$pageId
+        				);
         } else if (isset($resultVal) && $resultVal === "Failure") {
         	// edit failed
     		// we have a captcha element
@@ -92,13 +86,14 @@ class MediaWiki {
         	// some other error occurred
     		$result = $xml->xpath("/api/error");
     		// return error code
-    		$errorCode = (string)$result[0]->attributes()->code;
-    		if (isset($errorCode)) {
-    			return array(
-        					'result'=>'failure',
-        					'errorCode'=>$errorCode
-        				);
-    		} 
+    		$errorAttrs = (string)$error[0]->attributes();
+			$errorCode = $errorAttrs->code;
+			$errorInfo = $errorAttrs->info;
+			return array(
+    					'result'=>'failure',
+    					'errorCode'=>$errorCode,
+    					'errorInfo'=>$errorInfo
+    				);
         }
         
         // shouldn't have gotten this far...
