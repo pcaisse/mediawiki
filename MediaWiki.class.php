@@ -49,6 +49,20 @@ class MediaWiki {
 		
 		$xml = static::_httpRequest($url, http_build_query($postParams));
 
+		$error = $xml->xpath("/api/error");
+
+		if (!empty($error)) {
+			// an error occurred
+			$errorAttrs = $error[0]->attributes();
+			$errorCode = (string)$errorAttrs->code;
+			$errorInfo = (string)$errorAttrs->info;
+			return array(
+						'result'=>'failure',
+						'errorCode'=>$errorCode,
+						'errorInfo'=>$errorInfo
+					);
+		}
+
         $result = $xml->xpath("/api/edit");
         
         $resultVal = (string)$result[0]->attributes()->result; 
@@ -66,8 +80,9 @@ class MediaWiki {
     		// we have a captcha element
     		// check if it's an image captcha
     		$result = $xml->xpath("/api/edit/captcha");
-    		$url = (string)$result[0]->attributes()->url;
-    		$question = (string)$result[0]->attributes()->question;
+    		$captchaAttrs = $result[0]->attributes();
+    		$url = (string)$captchaAttrs->url;
+    		$question = (string)$captchaAttrs->question;
     		if (isset($url)) {
     			// image captcha
     			// return image URL
@@ -82,18 +97,6 @@ class MediaWiki {
     					'question'=>$question
     				);
     		}
-        } else {
-        	// some other error occurred
-    		$result = $xml->xpath("/api/error");
-    		// return error code
-    		$errorAttrs = (string)$error[0]->attributes();
-			$errorCode = $errorAttrs->code;
-			$errorInfo = $errorAttrs->info;
-			return array(
-    					'result'=>'failure',
-    					'errorCode'=>$errorCode,
-    					'errorInfo'=>$errorInfo
-    				);
         }
         
         // shouldn't have gotten this far...
