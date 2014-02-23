@@ -9,15 +9,25 @@ include($dir . '/testmore/testmore.php');
 include($dir . '/../MediaWiki.class.php');
 include($dir . '/../MediaWiki.config.php');
 
-plan(4);
+plan(2);
 
-ok(MediaWiki::login('Testy1', 'cull') !== null, 'login');  
+function login($user, $pass) {
+	$xml = MediaWiki::login($user, $pass);
+	$xmlStr = simplexml_load_string($xml);
+	$node = $xmlStr->xpath('/api/login');
+	$result = (string)$node[0]->attributes()->result;
+	return $result;
+}
 
-ok(MediaWiki::logout() === true, 'logout');
+ok(login('Testy1', 'cull') === 'Success', 'successful login');  
 
-$editResult = MediaWiki::edit(65723, "Unit Testing 1, 2, 3... " . mt_rand(), "Unit Test of API Wrapper", 0, null, null);
-ok((string)$editResult['result'] === 'success', 'successful edit');
+function edit($pageId, $sectionNum, $text, $summary) {
+	$xml = MediaWiki::edit($pageId, $sectionNum, $text, $summary, null, null);
+	$xmlStr = simplexml_load_string($xml);
+	$node = $xmlStr->xpath('/api/edit');
+	$result = (string)$node[0]->attributes()->result;
+	return $result;
+}
 
-$editRequiringCaptchaResult = MediaWiki::edit(65723, "Unit Testing 1, 2, 3... External link: http://some-fake-site.com/?p=" . mt_rand(), "Unit Test of API Wrapper", 0, null, null);
-ok((string)$editRequiringCaptchaResult['result'] === 'captcha', 'captcha required');
+ok(edit(65723, 0, 'Unit Testing 1, 2, 3... ' . mt_rand(), 'Unit Test of PHP Wrapper - Successful Edit') === 'Success', 'successful edit');
 
